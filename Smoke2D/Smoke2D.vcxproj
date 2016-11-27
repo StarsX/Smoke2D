@@ -108,6 +108,7 @@
     <ClInclude Include="XSDX\XSDXBuffer.h" />
     <ClInclude Include="XSDX\XSDXShader.h" />
     <ClInclude Include="XSDX\XSDXShaderCommon.h" />
+    <ClInclude Include="XSDX\XSDXSharedConst.h" />
     <ClInclude Include="XSDX\XSDXState.h" />
     <ClInclude Include="XSDX\XSDXType.h" />
   </ItemGroup>

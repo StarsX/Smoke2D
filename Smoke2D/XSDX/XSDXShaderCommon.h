@@ -12,12 +12,15 @@ namespace XSDX
 	// Constant buffer used to send MVP matrices to the vertex shader.
 #ifndef	CB_MATRICES
 #define CB_MATRICES
-	struct CBMatrices
+	struct alignas(16) CBMatrices
 	{
 		DirectX::XMMATRIX	m_mWorldViewProj;
 		DirectX::XMMATRIX	m_mWorld;
 		DirectX::XMMATRIX	m_mNormal;
 		DirectX::XMMATRIX	m_mShadow;
+#if	TEMPORAL > 0
+		DirectX::XMMATRIX	m_mWVPPrevs[TEMPORAL];
+#endif
 	};
 	using LPCBMatrices = std::add_pointer_t<CBMatrices>;
 #endif
@@ -26,6 +29,7 @@ namespace XSDX
 #define	CB_IMMUTABLE
 	struct CBImmutable
 	{
+		DirectX::XMFLOAT4	m_vViewport;
 		DirectX::XMFLOAT4	m_vDirectional;
 		DirectX::XMFLOAT4	m_vAmbient;
 	};
@@ -35,10 +39,15 @@ namespace XSDX
 #define	CB_GLOBAL
 	struct CBGlobal
 	{
-		DirectX::XMVECTOR	m_vLightPt;
-		DirectX::XMVECTOR	m_vEyePt;
-		DirectX::XMVECTOR	m_vLookAtPt;
-		DirectX::XMFLOAT4	m_vViewport;
+		DirectX::XMFLOAT4	m_vLightPt;
+		DirectX::XMFLOAT4	m_vEyePtTime;
+		DirectX::XMFLOAT4X4	m_mViewProjI;
+		DirectX::XMFLOAT4X4	m_mViewProj;
+		DirectX::XMFLOAT4X4	m_mView;
+		DirectX::XMFLOAT4	m_vLightPtETime;
+#if	TEMPORAL > 0
+		DirectX::XMFLOAT4	m_vProjBias[TEMPORAL + 1];
+#endif
 	};
 #endif
 
@@ -47,37 +56,92 @@ namespace XSDX
 #ifndef	BASIC_SHADER_IDS
 #define	BASIC_SHADER_IDS
 	// Vertex shaders
-	static auto				g_uVSScreenQuad	(0ui8);
-	static auto				g_uVSBasePass	(0ui8);
-	static auto				g_uVSPostproc	(0ui8);
-	static auto				g_uVSDepth		(1ui8);
-	static auto				g_uVSSkinning	(2ui8);
-	static auto				g_uVSBound		(5ui8);
+	enum CommonVertexShader	: uint32_t
+	{
+		VS_SCREEN_QUAD
+	};
 
-	// Geometry shaders
-	static auto				g_uGSSkinning	(2ui8);
+	enum ModelVertexShader	: uint32_t
+	{
+		VS_BASE_PASS,
+		VS_DEPTH,
+		VS_SKINNING,
+		VS_REFLECT,
+		VS_BOUND
+	};
 
 	// Pixel shaders
-	static auto				g_uPSShade		(0ui8);
-	static auto				g_uPSBasePass	(0ui8);
-	static auto				g_uPSSSReflect	(0ui8);
-	static auto				g_uPSPostproc	(0ui8);
-	static auto				g_uPSDepth		(1ui8);
-	static auto				g_uPSToneMap	(1ui8);
-	
-	static auto				g_uPSFXAA		(2ui8);
-	static auto				g_uPSOcclusion	(2ui8);
-	static auto				g_uPSResample	(3ui8);
-	static auto				g_uPSReflect	(3ui8);
-	static auto				g_uPSBound		(5ui8);
+	enum CommonPixelShader	: uint32_t
+	{
+		PS_DEFERRED_SHADE,
+		PS_DEPTH,
+		PS_OCCLUSION
+	};
+
+	enum ModelPixelShader	: uint32_t
+	{
+		PS_BASE_PASS,
+		PS_DEPTH_MODEL,
+		PS_OCCLUSION_MODEL,
+		PS_REFLECT,
+		PS_BOUND
+	};
+
+	enum EnvPixelShader		: uint32_t
+	{
+		PS_SS_REFLECT,
+		PS_SKY,
+		PS_WATER,
+		PS_RESAMPLE
+	};
+
+	enum PostPixelShader	: uint32_t
+	{
+		PS_POST_PROC,
+		PS_TONE_MAP,
+		PS_FXAA,
+		PS_TEMPORAL_AA
+	};
 
 	// Compute shaders
-	static auto				g_uCSLumAdapt	(0ui8);
+	enum PostComputeShader	: uint32_t
+	{
+		CS_LUM_ADAPT
+	};
+
+	// Vertex shaders
+	static uint8_t			g_uVSScreenQuad	(VS_SCREEN_QUAD);
+	static uint8_t			g_uVSBasePass	(VS_BASE_PASS);
+	static uint8_t			g_uVSPostproc	(VS_SCREEN_QUAD);
+	static uint8_t			g_uVSDepth		(VS_DEPTH);
+	static uint8_t			g_uVSSkinning	(VS_SKINNING);
+	static uint8_t			g_uVSBound		(VS_BOUND);
+
+	// Geometry shaders
+	static uint8_t			g_uGSSkinning	(VS_SKINNING);
+
+	// Pixel shaders
+	static uint8_t			g_uPSShade		(PS_DEFERRED_SHADE);
+	static uint8_t			g_uPSBasePass	(PS_BASE_PASS);
+	static uint8_t			g_uPSSSReflect	(PS_SS_REFLECT);
+	static uint8_t			g_uPSPostproc	(PS_POST_PROC);
+	static uint8_t			g_uPSDepth		(PS_DEPTH);
+	static uint8_t			g_uPSToneMap	(PS_TONE_MAP);
+	
+	static uint8_t			g_uPSFXAA		(PS_FXAA);
+	static uint8_t			g_uPSOcclusion	(PS_OCCLUSION);
+	static uint8_t			g_uPSResample	(PS_RESAMPLE);
+	static uint8_t			g_uPSTemporalAA	(PS_TEMPORAL_AA);
+	static uint8_t			g_uPSReflect	(PS_REFLECT);
+	static uint8_t			g_uPSBound		(PS_BOUND);
+
+	// Compute shaders
+	static uint8_t			g_uCSLumAdapt	(CS_LUM_ADAPT);
 #endif
 
 #ifndef	BASIC_SHADER_SLOTS
 #define	BASIC_SHADER_SLOTS
-	// Constant slots
+	// Other constant slots
 	static const auto		g_uCBBound		(3ui8);
 #endif
 }

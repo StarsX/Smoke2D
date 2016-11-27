@@ -223,11 +223,76 @@ const CPDXDepthStencilView &DepthStencil::GetDSVRO() const
 }
 
 //--------------------------------------------------------------------------------------
+// Raw buffer
+//--------------------------------------------------------------------------------------
+
+RawBuffer::RawBuffer(const CPDXDevice & pDXDevice) :
+	Buffer(pDXDevice)
+{
+}
+
+void RawBuffer::Create(const bool bVB, const bool bSO, const bool bSRV,
+	const bool bUAV, const bool bDyn, const uint32_t uByteWidth,
+	const lpcvoid pInitialData)
+{
+	// Create RB
+	auto uBindFlag = bVB ? D3D11_BIND_VERTEX_BUFFER : 0u;
+	uBindFlag |= bSO ? D3D11_BIND_STREAM_OUTPUT : 0u;
+	uBindFlag |= bSRV ? D3D11_BIND_SHADER_RESOURCE : 0u;
+	uBindFlag |= bUAV ? D3D11_BIND_UNORDERED_ACCESS : 0u;
+
+	auto bufferDesc = CD3D11_BUFFER_DESC(uByteWidth, uBindFlag,
+		bDyn ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT,
+		bDyn ? D3D11_CPU_ACCESS_WRITE : 0u);
+	bufferDesc.MiscFlags = bSRV || bUAV ? D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS : bufferDesc.MiscFlags;
+
+	if (pInitialData)
+	{
+		const auto bufferInitData = D3D11_SUBRESOURCE_DATA{ pInitialData };
+		DX::ThrowIfFailed(m_pDXDevice->CreateBuffer(&bufferDesc, &bufferInitData, &m_pBuffer));
+	}
+	else DX::ThrowIfFailed(m_pDXDevice->CreateBuffer(&bufferDesc, nullptr, &m_pBuffer));
+
+	// Create SRV
+	if (bSRV) CreateSRV(uByteWidth);
+	else m_pSRV = nullptr;
+
+	// Create UAV
+	if (bUAV)
+	{
+		const auto pBuffer = m_pBuffer.Get();
+		const auto uavDesc = CD3D11_UNORDERED_ACCESS_VIEW_DESC(pBuffer, DXGI_FORMAT_R32_TYPELESS,
+			0u, uByteWidth / 4u, D3D11_BUFFER_UAV_FLAG_RAW);
+		DX::ThrowIfFailed(m_pDXDevice->CreateUnorderedAccessView(pBuffer, &uavDesc, &m_pUAV));
+	}
+}
+
+void RawBuffer::CreateSRV(const uint32_t uByteWidth)
+{
+	// Create SRV
+	const auto pBuffer = m_pBuffer.Get();
+	const auto desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(pBuffer, DXGI_FORMAT_R32_TYPELESS,
+		0u, uByteWidth / 4u, D3D11_BUFFEREX_SRV_FLAG_RAW);
+
+	ThrowIfFailed(m_pDXDevice->CreateShaderResourceView(pBuffer, &desc, &m_pSRV));
+}
+
+const CPDXBuffer &RawBuffer::GetBuffer() const
+{
+	return m_pBuffer;
+}
+
+const CPDXUnorderedAccessView &RawBuffer::GetUAV() const
+{
+	return m_pUAV;
+}
+
+//--------------------------------------------------------------------------------------
 // Structured buffer
 //--------------------------------------------------------------------------------------
 
 StructuredBuffer::StructuredBuffer(const CPDXDevice &pDXDevice) :
-	Buffer(pDXDevice)
+	RawBuffer(pDXDevice)
 {
 }
 
@@ -270,14 +335,4 @@ void StructuredBuffer::CreateSRV(const uint32_t uNumElement)
 	const auto desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(pBuffer, DXGI_FORMAT_UNKNOWN, 0u, uNumElement);
 
 	ThrowIfFailed(m_pDXDevice->CreateShaderResourceView(pBuffer, &desc, &m_pSRV));
-}
-
-const CPDXBuffer &StructuredBuffer::GetBuffer() const
-{
-	return m_pBuffer;
-}
-
-const CPDXUnorderedAccessView &StructuredBuffer::GetUAV() const
-{
-	return m_pUAV;
 }

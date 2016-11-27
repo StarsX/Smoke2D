@@ -89,8 +89,31 @@ namespace XSDX
 	using vpDepthStencil = std::vector<spDepthStencil>;
 
 
-	class StructuredBuffer :
+	class RawBuffer :
 		public Buffer
+	{
+	public:
+		RawBuffer(const CPDXDevice &pDXDevice);
+		void Create(const bool bVB, const bool bSO, const bool bSRV,
+			const bool bUAV, const bool bDyn, const uint32_t uByteWidth,
+			const lpcvoid pInitialData = nullptr);
+		void CreateSRV(const uint32_t uByteWidth);
+
+		const CPDXBuffer				&GetBuffer() const;
+		const CPDXUnorderedAccessView	&GetUAV() const;
+	protected:
+		CPDXBuffer						m_pBuffer;
+		CPDXUnorderedAccessView			m_pUAV;
+	};
+
+	using upRawBuffer = std::unique_ptr<RawBuffer>;
+	using spRawBuffer = std::shared_ptr<RawBuffer>;
+	using vuRawBuffer = std::vector<upRawBuffer>;
+	using vpRawBuffer = std::vector<spRawBuffer>;
+
+
+	class StructuredBuffer :
+		public RawBuffer
 	{
 	public:
 		StructuredBuffer(const CPDXDevice &pDXDevice);
@@ -98,12 +121,6 @@ namespace XSDX
 			const uint32_t uNumElement, const uint32_t uStride,
 			const lpcvoid pInitialData = nullptr);
 		void CreateSRV(const uint32_t uNumElement);
-
-		const CPDXBuffer				&GetBuffer() const;
-		const CPDXUnorderedAccessView	&GetUAV() const;
-	protected:
-		CPDXBuffer						m_pBuffer;
-		CPDXUnorderedAccessView			m_pUAV;
 	};
 
 	using upStructuredBuffer = std::unique_ptr<StructuredBuffer>;

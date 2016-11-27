@@ -75,6 +75,9 @@
     <ClInclude Include="XSDX\XSDXShaderCommon.h">
       <Filter>XSDX\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="XSDX\XSDXSharedConst.h">
+      <Filter>XSDX\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Smoke2D.cpp">
