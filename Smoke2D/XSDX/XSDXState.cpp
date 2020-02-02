@@ -2,7 +2,6 @@
 // By Stars XU Tianchen
 //--------------------------------------------------------------------------------------
 
-#include "pch.h"
 #include "XSDXState.h"
 
 using namespace DX;
@@ -10,6 +9,10 @@ using namespace XSDX;
 
 State::State(const CPDXDevice &pDXDevice) :
 	m_pDXDevice(pDXDevice)
+{
+}
+
+State::~State(void)
 {
 }
 
@@ -37,8 +40,7 @@ void State::CreateDepthStencilState(CPDXDepthStencilState &pState, const bool bE
 		bEnable, bWriteEnable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO, eDepthFunc,
 		false, D3D11_DEFAULT_STENCIL_READ_MASK, D3D11_DEFAULT_STENCIL_WRITE_MASK,
 		D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS,
-		D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS
-		);
+		D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS);
 
 	ThrowIfFailed(m_pDXDevice->CreateDepthStencilState(&desc, &pState));
 }
@@ -69,7 +71,7 @@ void State::CreateSamplerState(CPDXSamplerState &pState, const D3D11_FILTER eFil
 	desc.AddressV = eAddressMode;
 	desc.AddressW = eAddressMode;
 
-	desc.MaxAnisotropy = (m_pDXDevice->GetFeatureLevel() > D3D_FEATURE_LEVEL_9_1) ? 16u : 2u;
+	desc.MaxAnisotropy = (m_pDXDevice->GetFeatureLevel() > D3D_FEATURE_LEVEL_9_1) ? 16 : 2;
 
 	desc.MaxLOD = D3D11_FLOAT32_MAX;
 	desc.ComparisonFunc = eCmpFunc;
@@ -114,6 +116,35 @@ const CPDXBlendState &State::NonPremultiplied()
 	return m_pNonPremultiplied;
 }
 
+const CPDXBlendState &State::NonPremultiplied0()
+{
+	if (!m_pNonPremultiplied0)
+	{
+		auto desc = D3D11_BLEND_DESC
+		{
+			false,								// AlphaToCoverageEnable
+			true,								// IndependentBlendEnable
+			// Non-premultiplied alpha blend RTV0 only
+			D3D11_RENDER_TARGET_BLEND_DESC
+			{
+				true,							// BlendEnable
+				D3D11_BLEND_SRC_ALPHA,			// SrcBlend
+				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlend
+				D3D11_BLEND_OP_ADD,				// BlendOp
+				D3D11_BLEND_SRC_ALPHA,			// SrcBlendAlpha
+				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlendAlpha
+				D3D11_BLEND_OP_ADD,				// BlendOpAlpha
+				D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
+			}
+		};
+		desc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+		ThrowIfFailed(m_pDXDevice->CreateBlendState(&desc, &m_pNonPremultiplied0));
+	}
+
+	return m_pNonPremultiplied0;
+}
+
 const CPDXBlendState &State::AlphaToCoverage()
 {
 	if (!m_pAlphaToCoverage)
@@ -134,10 +165,12 @@ const CPDXBlendState &State::AutoAlphaBlend()
 {
 	if (!m_pAutoAlphaBlend)
 	{
-		const auto desc = D3D11_BLEND_DESC {
+		const auto desc = D3D11_BLEND_DESC
+		{
 			false,								// AlphaToCoverageEnable
 			false,								// IndependentBlendEnable
-			D3D11_RENDER_TARGET_BLEND_DESC {
+			D3D11_RENDER_TARGET_BLEND_DESC
+			{
 				true,							// BlendEnable
 				D3D11_BLEND_SRC_ALPHA,			// SrcBlend
 				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlend
@@ -155,53 +188,31 @@ const CPDXBlendState &State::AutoAlphaBlend()
 	return m_pAutoAlphaBlend;
 }
 
-const CPDXBlendState &State::MultiBlend()
+const CPDXBlendState &State::BlendAlphaZero()
 {
-	if (!m_pMultiBlend)
+	if (!m_pBlendAlphaZero)
 	{
 		const auto desc = D3D11_BLEND_DESC
 		{
 			false,								// AlphaToCoverageEnable
-			true,								// IndependentBlendEnable
+			false,								// IndependentBlendEnable
 			D3D11_RENDER_TARGET_BLEND_DESC
 			{
 				true,							// BlendEnable
 				D3D11_BLEND_SRC_ALPHA,			// SrcBlend
 				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlend
 				D3D11_BLEND_OP_ADD,				// BlendOp
-				D3D11_BLEND_ONE,				// SrcBlendAlpha
-				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlendAlpha
-				D3D11_BLEND_OP_ADD,				// BlendOpAlpha
-				D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
-			},
-			D3D11_RENDER_TARGET_BLEND_DESC
-			{
-				true,							// BlendEnable
-				D3D11_BLEND_SRC_ALPHA,			// SrcBlend
-				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlend
-				D3D11_BLEND_OP_ADD,				// BlendOp
-				D3D11_BLEND_ONE,				// SrcBlendAlpha
-				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlendAlpha
-				D3D11_BLEND_OP_ADD,				// BlendOpAlpha
-				D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
-			},
-			D3D11_RENDER_TARGET_BLEND_DESC
-			{
-				true,							// BlendEnable
-				D3D11_BLEND_SRC_ALPHA,			// SrcBlend
-				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlend
-				D3D11_BLEND_OP_ADD,				// BlendOp
-				D3D11_BLEND_SRC_ALPHA,			// SrcBlendAlpha
-				D3D11_BLEND_INV_SRC_ALPHA,		// DestBlendAlpha
+				D3D11_BLEND_ZERO,				// SrcBlendAlpha
+				D3D11_BLEND_ZERO,				// DestBlendAlpha
 				D3D11_BLEND_OP_ADD,				// BlendOpAlpha
 				D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
 			}
 		};
 
-		ThrowIfFailed(m_pDXDevice->CreateBlendState(&desc, &m_pMultiBlend));
+		ThrowIfFailed(m_pDXDevice->CreateBlendState(&desc, &m_pBlendAlphaZero));
 	}
 
-	return m_pMultiBlend;
+	return m_pBlendAlphaZero;
 }
 
 const CPDXBlendState &State::Multiplied()
@@ -215,11 +226,11 @@ const CPDXBlendState &State::Multiplied()
 			D3D11_RENDER_TARGET_BLEND_DESC
 			{
 				true,							// BlendEnable
-				D3D11_BLEND_DEST_COLOR,			// SrcBlend
-				D3D11_BLEND_ZERO,				// DestBlend
+				D3D11_BLEND_ZERO,				// SrcBlend
+				D3D11_BLEND_SRC_COLOR,			// DestBlend
 				D3D11_BLEND_OP_ADD,				// BlendOp
-				D3D11_BLEND_DEST_ALPHA,			// SrcBlendAlpha
-				D3D11_BLEND_ZERO,				// DestBlendAlpha
+				D3D11_BLEND_ZERO,				// SrcBlendAlpha
+				D3D11_BLEND_SRC_ALPHA,			// DestBlendAlpha
 				D3D11_BLEND_OP_ADD,				// BlendOpAlpha
 				D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
 			}
@@ -235,7 +246,8 @@ const CPDXBlendState &State::WeightBlend()
 {
 	if (!m_pWeightBlend)
 	{
-		auto desc = D3D11_BLEND_DESC {
+		auto desc = D3D11_BLEND_DESC
+		{
 			false,								// AlphaToCoverageEnable
 			true,								// IndependentBlendEnable
 			// Accumulation
@@ -254,11 +266,11 @@ const CPDXBlendState &State::WeightBlend()
 			D3D11_RENDER_TARGET_BLEND_DESC
 			{
 				true,							// BlendEnable
-				D3D11_BLEND_DEST_COLOR,			// SrcBlend
-				D3D11_BLEND_ZERO,				// DestBlend
+				D3D11_BLEND_ZERO,				// SrcBlend
+				D3D11_BLEND_SRC_COLOR,			// DestBlend
 				D3D11_BLEND_OP_ADD,				// BlendOp
 				D3D11_BLEND_ZERO,				// SrcBlendAlpha
-				D3D11_BLEND_ZERO,				// DestBlendAlpha
+				D3D11_BLEND_SRC_ALPHA,			// DestBlendAlpha
 				D3D11_BLEND_OP_ADD				// BlendOpAlpha
 			}
 		};
@@ -269,6 +281,60 @@ const CPDXBlendState &State::WeightBlend()
 	}
 
 	return m_pWeightBlend;
+}
+
+const CPDXBlendState &State::SelectMin()
+{
+	if (!m_pSelectMin)
+	{
+		const auto desc = D3D11_BLEND_DESC
+		{
+			false,								// AlphaToCoverageEnable
+			false,								// IndependentBlendEnable
+			D3D11_RENDER_TARGET_BLEND_DESC
+		{
+			true,							// BlendEnable
+			D3D11_BLEND_ONE,				// SrcBlend
+			D3D11_BLEND_ONE,				// DestBlend
+			D3D11_BLEND_OP_MIN,				// BlendOp
+			D3D11_BLEND_ONE,				// SrcBlendAlpha
+			D3D11_BLEND_ONE,				// DestBlendAlpha
+			D3D11_BLEND_OP_MIN,				// BlendOpAlpha
+			D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
+		}
+		};
+
+		ThrowIfFailed(m_pDXDevice->CreateBlendState(&desc, &m_pSelectMin));
+	}
+
+	return m_pSelectMin;
+}
+
+const CPDXBlendState &State::SelectMax()
+{
+	if (!m_pSelectMax)
+	{
+		const auto desc = D3D11_BLEND_DESC
+		{
+			false,								// AlphaToCoverageEnable
+			false,								// IndependentBlendEnable
+			D3D11_RENDER_TARGET_BLEND_DESC
+			{
+				true,							// BlendEnable
+				D3D11_BLEND_ONE,				// SrcBlend
+				D3D11_BLEND_ONE,				// DestBlend
+				D3D11_BLEND_OP_MAX,				// BlendOp
+				D3D11_BLEND_ONE,				// SrcBlendAlpha
+				D3D11_BLEND_ONE,				// DestBlendAlpha
+				D3D11_BLEND_OP_MAX,				// BlendOpAlpha
+				D3D11_COLOR_WRITE_ENABLE_ALL	// RenderTargetWriteMask
+			}
+		};
+
+		ThrowIfFailed(m_pDXDevice->CreateBlendState(&desc, &m_pSelectMax));
+	}
+
+	return m_pSelectMax;
 }
 
 //--------------------------------------------------------------------------------------
@@ -305,6 +371,14 @@ const CPDXDepthStencilState &State::DepthReadLess()
 		CreateDepthStencilState(m_pDepthReadLess, true, false, D3D11_COMPARISON_LESS);
 
 	return m_pDepthReadLess;
+}
+
+const CPDXDepthStencilState &State::DepthReadEqual()
+{
+	if (!m_pDepthReadEqual)
+		CreateDepthStencilState(m_pDepthReadEqual, true, false, D3D11_COMPARISON_EQUAL);
+
+	return m_pDepthReadEqual;
 }
 
 //--------------------------------------------------------------------------------------
@@ -371,6 +445,15 @@ const CPDXSamplerState &State::PointBorder()
 	return m_pPointBorder;
 }
 
+const CPDXSamplerState &State::PointComparison()
+{
+	if (!m_pPointComparison)
+		CreateSamplerState(m_pPointComparison, D3D11_FILTER_COMPARISON_MIN_MAG_MIP_POINT,
+			D3D11_TEXTURE_ADDRESS_BORDER, D3D11_COMPARISON_LESS_EQUAL, 1.0f);
+
+	return m_pPointComparison;
+}
+
 const CPDXSamplerState &State::LinearWrap()
 {
 	if (!m_pLinearWrap)
@@ -398,13 +481,8 @@ const CPDXSamplerState &State::LinearBorder()
 const CPDXSamplerState &State::LinearComparison()
 {
 	if (!m_pLinearComparison)
-		CreateSamplerState(
-			m_pLinearComparison,
-			D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR,
-			D3D11_TEXTURE_ADDRESS_BORDER,
-			D3D11_COMPARISON_LESS_EQUAL,
-			1.0f
-		);
+		CreateSamplerState(m_pLinearComparison, D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR,
+			D3D11_TEXTURE_ADDRESS_BORDER, D3D11_COMPARISON_LESS_EQUAL, 1.0f);
 
 	return m_pLinearComparison;
 }
@@ -431,4 +509,13 @@ const CPDXSamplerState &State::AnisotropicBorder()
 		CreateSamplerState(m_pAnisotropicBorder, D3D11_FILTER_ANISOTROPIC, D3D11_TEXTURE_ADDRESS_BORDER);
 
 	return m_pAnisotropicBorder;
+}
+
+const CPDXSamplerState &State::AnisotropicComparison()
+{
+	if (!m_pAnisotropicComparison)
+		CreateSamplerState(m_pAnisotropicComparison, D3D11_FILTER_COMPARISON_ANISOTROPIC,
+			D3D11_TEXTURE_ADDRESS_BORDER, D3D11_COMPARISON_LESS_EQUAL, 1.0f);
+
+	return m_pAnisotropicComparison;
 }

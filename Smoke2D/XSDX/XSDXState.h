@@ -12,6 +12,7 @@ namespace XSDX
 	{
 	public:
 		State(const CPDXDevice &pDXDevice);
+		virtual ~State(void);
 
 		void CreateBlendState(
 			CPDXBlendState &pState, const bool bAlphaToCov,
@@ -33,17 +34,21 @@ namespace XSDX
 		const CPDXBlendState		&AlphaBlend();
 		const CPDXBlendState		&Additive();
 		const CPDXBlendState		&NonPremultiplied();
+		const CPDXBlendState		&NonPremultiplied0();
 		const CPDXBlendState		&AlphaToCoverage();
 		const CPDXBlendState		&Accumulative();
 		const CPDXBlendState		&AutoAlphaBlend();
-		const CPDXBlendState		&MultiBlend();
+		const CPDXBlendState		&BlendAlphaZero();
 		const CPDXBlendState		&Multiplied();
 		const CPDXBlendState		&WeightBlend();
+		const CPDXBlendState		&SelectMin();
+		const CPDXBlendState		&SelectMax();
 
 		const CPDXDepthStencilState	&DepthNone();
 		const CPDXDepthStencilState	&DepthDefault();
 		const CPDXDepthStencilState	&DepthRead();
 		const CPDXDepthStencilState	&DepthReadLess();
+		const CPDXDepthStencilState	&DepthReadEqual();
 
 		const CPDXRasterizerState	&CullNone();
 		const CPDXRasterizerState	&CullClockwise();
@@ -53,6 +58,7 @@ namespace XSDX
 		const CPDXSamplerState		&PointWrap();
 		const CPDXSamplerState		&PointClamp();
 		const CPDXSamplerState		&PointBorder();
+		const CPDXSamplerState		&PointComparison();
 		const CPDXSamplerState		&LinearWrap();
 		const CPDXSamplerState		&LinearClamp();
 		const CPDXSamplerState		&LinearBorder();
@@ -60,22 +66,27 @@ namespace XSDX
 		const CPDXSamplerState		&AnisotropicWrap();
 		const CPDXSamplerState		&AnisotropicClamp();
 		const CPDXSamplerState		&AnisotropicBorder();
+		const CPDXSamplerState		&AnisotropicComparison();
 	protected:
 		CPDXBlendState				m_pOpaque;
 		CPDXBlendState				m_pAlphaBlend;
 		CPDXBlendState				m_pAdditive;
 		CPDXBlendState				m_pNonPremultiplied;
+		CPDXBlendState				m_pNonPremultiplied0;
 		CPDXBlendState				m_pAlphaToCoverage;
 		CPDXBlendState				m_pAccumulative;
 		CPDXBlendState				m_pAutoAlphaBlend;
-		CPDXBlendState				m_pMultiBlend;
+		CPDXBlendState				m_pBlendAlphaZero;
 		CPDXBlendState				m_pMultiplied;
 		CPDXBlendState				m_pWeightBlend;
+		CPDXBlendState				m_pSelectMin;
+		CPDXBlendState				m_pSelectMax;
 
 		CPDXDepthStencilState		m_pDepthNone;
 		CPDXDepthStencilState		m_pDepthDefault;
 		CPDXDepthStencilState		m_pDepthRead;
 		CPDXDepthStencilState		m_pDepthReadLess;
+		CPDXDepthStencilState		m_pDepthReadEqual;
 
 		CPDXRasterizerState			m_pCullNone;
 		CPDXRasterizerState			m_pCullClockwise;
@@ -85,6 +96,7 @@ namespace XSDX
 		CPDXSamplerState			m_pPointWrap;
 		CPDXSamplerState			m_pPointClamp;
 		CPDXSamplerState			m_pPointBorder;
+		CPDXSamplerState			m_pPointComparison;
 		CPDXSamplerState			m_pLinearWrap;
 		CPDXSamplerState			m_pLinearClamp;
 		CPDXSamplerState			m_pLinearBorder;
@@ -92,6 +104,7 @@ namespace XSDX
 		CPDXSamplerState			m_pAnisotropicWrap;
 		CPDXSamplerState			m_pAnisotropicClamp;
 		CPDXSamplerState			m_pAnisotropicBorder;
+		CPDXSamplerState			m_pAnisotropicComparison;
 
 		CPDXDevice					m_pDXDevice;
 	};

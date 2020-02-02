@@ -11,51 +11,59 @@
 #define VEC_ALLOC(v, i)			{ v.resize(i); v.shrink_to_fit(); }
 #define VEC_ALLOC_PTR(p, T, i)	{ p = make_shared<T>(); p->resize(i); p->shrink_to_fit(); }
 
-// Dereference
-#define DREF(p)					(*p)
-
 namespace XSDX
 {
-	template<typename T>
-	inline T& dref(std::shared_ptr<T> &p)
-	{
-		assert(p);
-		return DREF(p);
-	}
-
+	//--------------------------------------------------------------------------------------
+	// Dereference
+	//--------------------------------------------------------------------------------------
+	
 	template<typename T, size_t S>
 	inline T& dref(std::_Array_iterator<T, S> &p)
 	{
 		assert(p._Ptr);
-		return DREF(p);
+		return p[0];
 	}
 
 	template<typename T, size_t S>
 	inline const T dref(std::_Array_const_iterator<T, S> &p)
 	{
 		assert(p._Ptr);
-		return DREF(p);
+		return p[0];
 	}
 
 	template<typename T>
-	inline T& dref(std::_Vector_iterator<T> &p)
+	inline T& dref(std::_Vector_iterator<std::_Vector_val<std::_Simple_types<T>>> &p)
 	{
 		assert(p._Ptr);
-		return DREF(p);
+		return p[0];
 	}
 
 	template<typename T>
-	inline const T dref(std::_Vector_const_iterator<T> &p)
+	inline const T dref(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<T>>> &p)
 	{
 		assert(p._Ptr);
-		return DREF(p);
+		return p[0];
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_pointer<T>::value>>
 	inline typename std::remove_pointer_t<T>& dref(T p)
 	{
 		assert(p);
-		return DREF(p);
+		return p[0];
+	}
+
+	template<typename T>
+	inline T& dref(std::unique_ptr<T> &p)
+	{
+		assert(p);
+		return dref(p.get());
+	}
+
+	template<typename T>
+	inline T& dref(std::shared_ptr<T> &p)
+	{
+		assert(p);
+		return dref(p.get());
 	}
 
 	//--------------------------------------------------------------------------------------
@@ -70,6 +78,7 @@ namespace XSDX
 	using CPDXResource				= Microsoft::WRL::ComPtr<ID3D11Resource>;
 	using CPDXBuffer				= Microsoft::WRL::ComPtr<ID3D11Buffer>;
 	using CPDXTexture2D				= Microsoft::WRL::ComPtr<ID3D11Texture2D>;
+	using CPDXTexture3D				= Microsoft::WRL::ComPtr<ID3D11Texture3D>;
 	using CPDXShaderResourceView	= Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>;
 	using CPDXRenderTargetView		= Microsoft::WRL::ComPtr<ID3D11RenderTargetView>;
 	using CPDXDepthStencilView		= Microsoft::WRL::ComPtr<ID3D11DepthStencilView>;
@@ -110,6 +119,7 @@ namespace XSDX
 	using LPDXResource				= std::add_pointer_t<ID3D11Resource>;
 	using LPDXBuffer				= std::add_pointer_t<ID3D11Buffer>;
 	using LPDXTexture2D				= std::add_pointer_t<ID3D11Texture2D>;
+	using LPDXTexture3D				= std::add_pointer_t<ID3D11Texture3D>;
 	using LPDXShaderResourceView	= std::add_pointer_t<ID3D11ShaderResourceView>;
 	using LPDXRenderTargetView		= std::add_pointer_t<ID3D11RenderTargetView>;
 	using LPDXDepthStencilView		= std::add_pointer_t<ID3D11DepthStencilView>;
@@ -139,7 +149,9 @@ namespace XSDX
 	using pfloat					= std::add_pointer_t<float>;
 	using pbyte						= std::add_pointer_t<byte>;
 	using pint8						= std::add_pointer_t<int8_t>;
+	using pint16					= std::add_pointer_t<int16_t>;
 	using puint8					= std::add_pointer_t<uint8_t>;
+	using puint16					= std::add_pointer_t<uint16_t>;
 	using puint						= std::add_pointer_t<uint32_t>;
 	using lpvoid					= std::add_pointer_t<void>;
 	using lpcvoid					= std::add_pointer_t<const void>;
@@ -178,10 +190,34 @@ namespace XSDX
 	//--------------------------------------------------------------------------------------
 
 	// DirectX types
+	using vCPDXResource				= std::vector<CPDXResource>;
 	using vCPDXBuffer				= std::vector<CPDXBuffer>;
 	using vCPDXTexture2D			= std::vector<CPDXTexture2D>;
+	using vCPDXTexture3D			= std::vector<CPDXTexture3D>;
 	using vCPDXSRV					= std::vector<CPDXShaderResourceView>;
+	using vCPDXRTV					= std::vector<CPDXRenderTargetView>;
+	using vCPDXDSV					= std::vector<CPDXDepthStencilView>;
 	using vCPDXUAV					= std::vector<CPDXUnorderedAccessView>;
+
+	using vCPDXBlendState			= std::vector<CPDXBlendState>;
+	using vCPDXDepthStencilState	= std::vector<CPDXDepthStencilState>;
+	using vCPDXRasterizerState		= std::vector<CPDXRasterizerState>;
+	using vCPDXSamplerState			= std::vector<CPDXSamplerState>;
+
+	// DirectX type pointers
+	using vLPDXResource				= std::vector<LPDXResource>;
+	using vLPDXBuffer				= std::vector<LPDXBuffer>;
+	using vLPDXTexture2D			= std::vector<LPDXTexture2D>;
+	using vLPDXTexture3D			= std::vector<LPDXTexture3D>;
+	using vLPDXSRV					= std::vector<LPDXShaderResourceView>;
+	using vLPDXRTV					= std::vector<LPDXRenderTargetView>;
+	using vLPDXDSV					= std::vector<LPDXDepthStencilView>;
+	using vLPDXUAV					= std::vector<LPDXUnorderedAccessView>;
+
+	using vLPDXBlendState			= std::vector<LPDXBlendState>;
+	using vLPDXDepthStencilState	= std::vector<LPDXDepthStencilState>;
+	using vLPDXRasterizerState		= std::vector<LPDXRasterizerState>;
+	using vLPDXSamplerState			= std::vector<LPDXSamplerState>;
 
 	// Basic types
 	using vbool						= std::vector<bool>;
@@ -190,7 +226,9 @@ namespace XSDX
 	using vfloat					= std::vector<float>;
 	using vbyte						= std::vector<byte>;
 	using vint8						= std::vector<int8_t>;
+	using vint16					= std::vector<int16_t>;
 	using vuint8					= std::vector<uint8_t>;
+	using vuint16					= std::vector<uint16_t>;
 	using vuint						= std::vector<uint32_t>;
 
 	// Vector vectors
@@ -200,7 +238,9 @@ namespace XSDX
 	using vvfloat					= std::vector<vfloat>;
 	using vvbyte					= std::vector<vbyte>;
 	using vvint8					= std::vector<vint8>;
+	using vvint16					= std::vector<vint16>;
 	using vvuint8					= std::vector<vuint8>;
+	using vvuint16					= std::vector<vuint16>;
 	using vvuint					= std::vector<vuint>;
 
 	// Integer vectors
@@ -236,9 +276,4 @@ namespace XSDX
 	using TaskVecByte				= Concurrency::task<vbyte>;
 	using TaskVoid					= Concurrency::task<void>;
 	using TaskCPDXBlob				= Concurrency::task<CPDXBlob>;
-
-	//--------------------------------------------------------------------------------------
-	// Others
-	//--------------------------------------------------------------------------------------
-	using wstring64					= wchar_t[64];
 }

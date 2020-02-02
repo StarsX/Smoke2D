@@ -43,8 +43,8 @@ void Fluid2D::Init(uint32_t iWidth, uint32_t iHeight)
 	// Create Structured Buffer
 	m_pSBDye = make_unique<StructuredBuffer>(m_pd3dDevice);
 	m_pSBAdvDye = make_unique<StructuredBuffer>(m_pd3dDevice);
-	m_pSBDye->Create(true, true, false, m_iSimSize, sizeof(XMFLOAT4));
-	m_pSBAdvDye->Create(true, true, false, m_iSimSize, sizeof(XMFLOAT4));
+	m_pSBDye->Create(m_iSimSize, sizeof(XMFLOAT4), D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS);
+	m_pSBAdvDye->Create(m_iSimSize, sizeof(XMFLOAT4), D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS);
 
 	m_pDiffuse->Init(m_iSimSize, sizeof(XMFLOAT2));
 	m_pPressure->Init(m_iSimSize, sizeof(float));

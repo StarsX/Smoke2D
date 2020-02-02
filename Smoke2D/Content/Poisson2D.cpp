@@ -36,8 +36,8 @@ void Poisson2D::Init(uint32_t iSimSize, uint32_t iStride)
 	// Create Structured Buffers
 	m_pSBKnown = make_shared<StructuredBuffer>(m_pd3dDevice);
 	m_pSBUnknown = make_shared<StructuredBuffer>(m_pd3dDevice);
-	m_pSBKnown->Create(true, true, false, iSimSize, iStride);
-	m_pSBUnknown->Create(true, true, false, iSimSize, iStride, vData.data());
+	m_pSBKnown->Create(iSimSize, iStride, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS);
+	m_pSBUnknown->Create(iSimSize, iStride, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS, vData.data());
 }
 
 void Poisson2D::SetShaders(uint8_t csJacobi)
@@ -87,7 +87,8 @@ void Poisson2D::SolvePoisson(uint8_t iIteration)
 	m_pd3dContext->CSSetShaderResources(g_iSRField, 1, m_pSBKnown->GetSRV().GetAddressOf());
 
 	// Clear buffer
-	/*if (m_iCSClear != NULL_SHADER) {
+	/*if (m_iCSClear != NULL_SHADER)
+	{
 		m_pd3dContext->CSSetUnorderedAccessViews(g_iUASlot, 1, m_sbSwaps[m_iResult].m_pUAView.GetAddressOf(), &UAVInitialCounts);
 		m_pd3dContext->CSSetShader(m_pShader->GetComputeShader(m_iCSClear).Get(), nullptr, 0);
 		m_pd3dContext->Dispatch(g_iSimGrid2D / THREAD_BLOCK_SIZE, 1, 1);

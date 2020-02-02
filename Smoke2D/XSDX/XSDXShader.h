@@ -6,7 +6,7 @@
 
 #include "XSDXType.h"
 
-#define MAX_SHADER_NUM			64ui8
+#define MAX_SHADER_NUM			UINT8_MAX
 #ifndef NULL_SHADER
 #define NULL_SHADER				UINT8_MAX
 #endif
@@ -19,19 +19,20 @@ namespace XSDX
 		using LPCD3D11_SO_DECLARATION_ENTRY = std::add_pointer_t<const D3D11_SO_DECLARATION_ENTRY>;
 
 		Shader(const CPDXDevice &pDXDevice);
+		virtual ~Shader(void);
 
-		TaskCPDXBlob ReadShaderFile(const LPCWSTR szFileName);
-		TaskVoid CreateVertexShader(const LPCWSTR szFileName, const uint8_t i);
-		TaskVoid CreateHullShader(const LPCWSTR szFileName, const uint8_t i);
-		TaskVoid CreateDomainShader(const LPCWSTR szFileName, const uint8_t i);
-		TaskVoid CreateGeometryShader(const LPCWSTR szFileName, const uint8_t i);
-		TaskVoid CreateGeometryShaderWithSO(const LPCWSTR szFileName, const uint8_t i,
-			const LPCD3D11_SO_DECLARATION_ENTRY pDecl, const uint8_t uNumEntry);
-		TaskVoid CreatePixelShader(const LPCWSTR szFileName, const uint8_t i);
-		TaskVoid CreateComputeShader(const LPCWSTR szFileName, const uint8_t i);
+		TaskCPDXBlob ReadShaderFile(const std::wstring &szFileName);
+		TaskVoid CreateVertexShader(const std::wstring &szFileName, const uint8_t i);
+		TaskVoid CreateHullShader(const std::wstring &szFileName, const uint8_t i);
+		TaskVoid CreateDomainShader(const std::wstring &szFileName, const uint8_t i);
+		TaskVoid CreateGeometryShader(const std::wstring &szFileName, const uint8_t i);
+		TaskVoid CreateGeometryShaderWithSO(const std::wstring &szFileName, const uint8_t i,
+			const LPCD3D11_SO_DECLARATION_ENTRY pDecl, const uint8_t uNumEntries);
+		TaskVoid CreatePixelShader(const std::wstring &szFileName, const uint8_t i);
+		TaskVoid CreateComputeShader(const std::wstring &szFileName, const uint8_t i);
 
 		void CreateGeometryShaderWithSO(const uint8_t i,
-			const LPCD3D11_SO_DECLARATION_ENTRY pDecl, const uint8_t uNumEntry);
+			const LPCD3D11_SO_DECLARATION_ENTRY pDecl, const uint8_t uNumEntries);
 
 		void SetVertexShaderBuffer(const uint8_t i, const CPDXBlob &pFileData);
 		void SetVertexShader(const uint8_t i, const CPDXVertexShader &pShader);

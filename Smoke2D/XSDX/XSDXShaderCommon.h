@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "XSDXSharedConst.h"
+
 namespace XSDX
 {
 #ifndef	BASIC_SHADER_STRUCTURES
@@ -18,8 +20,8 @@ namespace XSDX
 		DirectX::XMMATRIX	m_mWorld;
 		DirectX::XMMATRIX	m_mNormal;
 		DirectX::XMMATRIX	m_mShadow;
-#if	TEMPORAL > 0
-		DirectX::XMMATRIX	m_mWVPPrevs[TEMPORAL];
+#if	TEMPORAL
+		DirectX::XMMATRIX	m_mWVPPrev;
 #endif
 	};
 	using LPCBMatrices = std::add_pointer_t<CBMatrices>;
@@ -45,10 +47,8 @@ namespace XSDX
 		DirectX::XMFLOAT4X4	m_mViewProj;
 		DirectX::XMFLOAT4X4	m_mView;
 		DirectX::XMFLOAT4	m_vLightPtETime;
-#if	TEMPORAL > 0
-		DirectX::XMFLOAT4	m_vProjBias[TEMPORAL + 1];
-#endif
 	};
+	using LPCBGlobal = std::add_pointer_t<CBGlobal>;
 #endif
 
 #endif
@@ -99,11 +99,17 @@ namespace XSDX
 	{
 		PS_POST_PROC,
 		PS_TONE_MAP,
-		PS_FXAA,
-		PS_TEMPORAL_AA
+		PS_TEMPORAL_AA,
+		PS_UNSHARP,
+		PS_FXAA
 	};
 
 	// Compute shaders
+	enum ModelComputeShader : uint32_t
+	{
+		CS_SKINNING
+	};
+
 	enum PostComputeShader	: uint32_t
 	{
 		CS_LUM_ADAPT
@@ -117,9 +123,6 @@ namespace XSDX
 	static uint8_t			g_uVSSkinning	(VS_SKINNING);
 	static uint8_t			g_uVSBound		(VS_BOUND);
 
-	// Geometry shaders
-	static uint8_t			g_uGSSkinning	(VS_SKINNING);
-
 	// Pixel shaders
 	static uint8_t			g_uPSShade		(PS_DEFERRED_SHADE);
 	static uint8_t			g_uPSBasePass	(PS_BASE_PASS);
@@ -128,20 +131,22 @@ namespace XSDX
 	static uint8_t			g_uPSDepth		(PS_DEPTH);
 	static uint8_t			g_uPSToneMap	(PS_TONE_MAP);
 	
-	static uint8_t			g_uPSFXAA		(PS_FXAA);
+	static uint8_t			g_uPSTemporalAA	(PS_TEMPORAL_AA);
 	static uint8_t			g_uPSOcclusion	(PS_OCCLUSION);
 	static uint8_t			g_uPSResample	(PS_RESAMPLE);
-	static uint8_t			g_uPSTemporalAA	(PS_TEMPORAL_AA);
+	static uint8_t			g_uPSUnsharp	(PS_UNSHARP);
+	static uint8_t			g_uPSFXAA		(PS_FXAA);
 	static uint8_t			g_uPSReflect	(PS_REFLECT);
 	static uint8_t			g_uPSBound		(PS_BOUND);
 
 	// Compute shaders
+	static uint8_t			g_uCSSkinning	(CS_SKINNING);
 	static uint8_t			g_uCSLumAdapt	(CS_LUM_ADAPT);
 #endif
 
 #ifndef	BASIC_SHADER_SLOTS
 #define	BASIC_SHADER_SLOTS
 	// Other constant slots
-	static const auto		g_uCBBound		(3ui8);
+	static const uint8_t	g_uCBBound		(3);
 #endif
 }

@@ -6,7 +6,7 @@
 
 #include "XSDXShader.h"
 #include "XSDXState.h"
-#include "XSDXBuffer.h"
+#include "XSDXResource.h"
 #include "ShaderCommon2D.h"
 
 class Poisson2D
